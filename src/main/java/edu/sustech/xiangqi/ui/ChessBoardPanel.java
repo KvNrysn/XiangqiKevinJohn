@@ -193,6 +193,4 @@ public class ChessBoardPanel extends JPanel {
         g.drawLine(centerX + cornerSize, centerY + cornerSize,
                 centerX + cornerSize, centerY + cornerSize - lineLength);
     }
-    //kontol
-
 }
