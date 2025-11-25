@@ -1,4 +1,4 @@
-package edu.sustech.xiangqi;
+package edu.sustech.xiangqi.ui;
 
 import edu.sustech.xiangqi.model.ChessBoardModel;
 import edu.sustech.xiangqi.ui.ChessBoardPanel;
