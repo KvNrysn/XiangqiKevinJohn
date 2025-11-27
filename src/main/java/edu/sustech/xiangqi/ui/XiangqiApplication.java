@@ -1,9 +1,9 @@
 package edu.sustech.xiangqi.ui;
 
-import edu.sustech.xiangqi.model.ChessBoardModel;
-import edu.sustech.xiangqi.ui.ChessBoardPanel;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
-import javax.swing.*;
+import edu.sustech.xiangqi.model.ChessBoardModel;
 
 public class XiangqiApplication {
     public static void main(String[] args) {
@@ -13,7 +13,6 @@ public class XiangqiApplication {
 
             ChessBoardModel model = new ChessBoardModel();
             ChessBoardPanel boardPanel = new ChessBoardPanel(model);
-
             frame.add(boardPanel);
             frame.pack();
             frame.setLocationRelativeTo(null);
