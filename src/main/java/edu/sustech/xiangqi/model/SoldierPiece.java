@@ -1,8 +1,5 @@
 package edu.sustech.xiangqi.model;
 
-/**
- * 兵/卒
- */
 public class SoldierPiece extends AbstractPiece {
 
     public SoldierPiece(String name, int row, int col, boolean isRed) {
@@ -14,39 +11,31 @@ public class SoldierPiece extends AbstractPiece {
         int currentRow = getRow();
         int currentCol = getCol();
 
+
         if (currentRow == targetRow && currentCol == targetCol) {
-            return false;
+            return false;   // Cannot "move" to its same location
         }
 
         int rowDiff = targetRow - currentRow;
         int colDiff = Math.abs(targetCol - currentCol);
 
-        // 兵/卒的移动规则：
-        // 1. 未过河前只能向前走一步
-        // 2. 过河后可以向前、向左、向右走一步，但不能后退
-        if (isRed()) {
-            // 红方兵（向上走，row减小）
-            boolean crossedRiver = currentRow < 5; // 过了楚河汉界
+        if (isRed()) {  // Determine if the soldier has crossed the river (river between row 4&5)
+            boolean crossedRiver = currentRow < 5;  // Red soldiers move upward (row decreases)
 
             if (!crossedRiver) {
-                // 未过河：只能向前（向上）走一步
-                return rowDiff == -1 && colDiff == 0;
-            } else {
-                // 过河后：可以向前、向左、向右走一步
-                if (rowDiff == -1 && colDiff == 0) return true; // 向前
-                return rowDiff == 0 && colDiff == 1;  // 向左或向右
+                return rowDiff == -1 && colDiff == 0;  // Before crossing: can only move forward one step
+            } else {    //after crossing
+                if (rowDiff == -1 && colDiff == 0) return true; // can move forward
+                return rowDiff == 0 && colDiff == 1;            // can move left or right
             }
-        } else {
-            // 黑方卒（向下走，row增大）
-            boolean crossedRiver = currentRow >= 5; // 过了楚河汉界
 
+        } else {
+            boolean crossedRiver = currentRow >= 5;  // Black soldiers move downward (row increases)
             if (!crossedRiver) {
-                // 未过河：只能向前（向下）走一步
-                return rowDiff == 1 && colDiff == 0;
-            } else {
-                // 过河后：可以向前、向左、向右走一步
-                if (rowDiff == 1 && colDiff == 0) return true; // 向前
-                return rowDiff == 0 && colDiff == 1; // 向左或向右
+                return rowDiff == 1 && colDiff == 0;  // Before crossing: can only move forward one step
+            } else {    // After crossing
+                if (rowDiff == 1 && colDiff == 0) return true; // can move forward
+                return rowDiff == 0 && colDiff == 1;           // can move left or right
             }
         }
     }
