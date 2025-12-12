@@ -24,17 +24,22 @@ public class SoldierPiece extends AbstractPiece {
 
             if (!crossedRiver) {
                 return rowDiff == -1 && colDiff == 0;  // Before crossing: can only move forward one step
-            } else {    //after crossing
+            }
+            else {    //after crossing
                 if (rowDiff == -1 && colDiff == 0) return true; // can move forward
                 return rowDiff == 0 && colDiff == 1;            // can move left or right
             }
 
-        } else {
+        }
+        else {
             boolean crossedRiver = currentRow >= 5;  // Black soldiers move downward (row increases)
             if (!crossedRiver) {
                 return rowDiff == 1 && colDiff == 0;  // Before crossing: can only move forward one step
-            } else {    // After crossing
-                if (rowDiff == 1 && colDiff == 0) return true; // can move forward
+            }
+            else {    // After crossing
+                if (rowDiff == 1 && colDiff == 0) {
+                    return true; // can move forward
+                }
                 return rowDiff == 0 && colDiff == 1;           // can move left or right
             }
         }
