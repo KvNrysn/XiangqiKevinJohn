@@ -11,6 +11,8 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.Point;
+import java.io.File;
+
 
 public class ChessBoardPanel extends JPanel {
 
@@ -134,19 +136,34 @@ public class ChessBoardPanel extends JPanel {
     private void showIllegalFeedback(String message) {
         feedbackLabel.setText(message);
 
+        if (message.contains("Checkmate")) {
+            feedbackLabel.setForeground(new Color(140, 0, 0));
+        }
+        else if (message.contains("Check")) {
+            feedbackLabel.setForeground(new Color(200, 80, 0));
+        }
+        else if (message.contains("captured")) {
+            feedbackLabel.setForeground(new Color(30, 120, 30));
+        }
+        else {
+            feedbackLabel.setForeground(new Color(180, 0, 0));
+        }
+
         if (feedbackTimer != null && feedbackTimer.isRunning()) {
             feedbackTimer.stop();
         }
 
-        feedbackTimer = new Timer(1000, e -> {
+        feedbackTimer = new Timer(1200, e -> {
             feedbackLabel.setText(" ");
             feedbackTimer.stop();
         });
         feedbackTimer.setRepeats(false);
         feedbackTimer.start();
 
-        triggerIllegalMoveFeedback(); // existing red flash
+        triggerIllegalMoveFeedback();
     }
+
+
 
 
 
@@ -217,6 +234,16 @@ public class ChessBoardPanel extends JPanel {
     }
 
     private void saveGame() {
+        if (isGameOver) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Game has ended. Finished games cannot be saved.",
+                    "Save Disabled",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
+        }
+
         if (isGuest) {
             JOptionPane.showMessageDialog(this,
                     "Guests cannot save games.",
@@ -225,14 +252,9 @@ public class ChessBoardPanel extends JPanel {
             return;
         }
 
-        String path = "data/saves/" + username + ".save";
-        model.saveGame(path);
-
-        JOptionPane.showMessageDialog(this,
-                "Game saved successfully.",
-                "Save Game",
-                JOptionPane.INFORMATION_MESSAGE);
+        model.saveGame("data/saves/" + username + ".save");
     }
+
 
 
     private void restartGame() {
@@ -280,11 +302,14 @@ public class ChessBoardPanel extends JPanel {
 
         model.resignCurrentPlayer();
 
+        deleteSaveIfExists();
+
         String msg = resigningRed
                 ? "Black Wins! (Red resigned)"
                 : "Red Wins! (Black resigned)";
 
         showGameOverOverlay(msg);
+
     }
 
     // ===================== Input / Move =====================
@@ -334,10 +359,15 @@ public class ChessBoardPanel extends JPanel {
         updateTurnLabel();
 
         if (!ok) {
-            showIllegalFeedback("Illegal move");
+            if (model.generalInCheck(model.isRedTurn())) {
+                showIllegalFeedback("Move exposes your General to check");
+            } else {
+                showIllegalFeedback("Illegal move");
+            }
             repaint();
             return;
         }
+
 
         detectCapturedPieces(beforeMove);
         handlePostMoveUI();
@@ -348,11 +378,17 @@ public class ChessBoardPanel extends JPanel {
     private void detectCapturedPieces(List<AbstractPiece> beforeMove) {
         for (AbstractPiece p : beforeMove) {
             if (!model.getPieces().contains(p)) {
+
                 if (p.isRed()) capturedRed.add(p);
                 else capturedBlack.add(p);
+
+                // === CAPTURE FEEDBACK ===
+                String side = p.isRed() ? "Red" : "Black";
+                showIllegalFeedback(side + " piece captured");
             }
         }
     }
+
 
     private void lockTurnBriefly() {
         turnLocked = true;
@@ -417,18 +453,29 @@ public class ChessBoardPanel extends JPanel {
 
 
     private void handlePostMoveUI() {
-        String end = model.checkEndgame(); // "NONE", "RED_WIN", "BLACK_WIN", "DRAW"
-        if ("NONE".equals(end)) return;
+        String end = model.checkEndgame();
+
+        // === CHECK (only if game continues) ===
+        if ("NONE".equals(end)) {
+            boolean opponentIsRed = model.isRedTurn();
+            if (model.generalInCheck(opponentIsRed)) {
+                showIllegalFeedback("Check!");
+            }
+            return;
+        }
+
+        // === GAME OVER ===
+        deleteSaveIfExists();
 
         String message;
 
         if ("RED_WIN".equals(end)) {
-            message = "Red Wins!";
+            message = "Checkmate — Red Wins!";
         }
         else if ("BLACK_WIN".equals(end)) {
-            message = "Black Wins!";
+            message = "Checkmate — Black Wins!";
         }
-        else { // DRAW
+        else {
             if (model.isThreefoldRepetition()) {
                 message = "Draw — Threefold Repetition";
             }
@@ -442,6 +489,8 @@ public class ChessBoardPanel extends JPanel {
 
         showGameOverOverlay(message);
     }
+
+
 
 
     private void clearSelection() {
@@ -563,15 +612,22 @@ public class ChessBoardPanel extends JPanel {
         if (selectedPiece == null) return;
 
         for (Point p : validMovePoints) {
+            AbstractPiece target = model.getPieceAt(p.y, p.x);
+
+            // ❌ Skip marking friendly pieces entirely
+            if (target != null && target.isRed() == selectedPiece.isRed()) {
+                continue;
+            }
+
             int cx = boardLeftX() + p.x * CELL_SIZE;
             int cy = boardTopY() + p.y * CELL_SIZE;
 
-            AbstractPiece target = model.getPieceAt(p.y, p.x);
-
             if (target == null) {
+                // 🟢 Normal move
                 g.setColor(new Color(0, 180, 0, 120));
                 g.fillOval(cx - 10, cy - 10, 20, 20);
             } else {
+                // 🔴 Enemy capture
                 g.setColor(new Color(200, 0, 0, 180));
                 g.setStroke(new BasicStroke(3));
                 g.drawOval(
@@ -583,6 +639,7 @@ public class ChessBoardPanel extends JPanel {
             }
         }
     }
+
 
     private void drawCapturedPieces(Graphics2D g) {
         int miniRadius = 16;
@@ -677,6 +734,16 @@ public class ChessBoardPanel extends JPanel {
         );
     }
 
+    private void deleteSaveIfExists() {
+        if (isGuest || username == null) return;
+
+        File saveFile = new File("data/saves/" + username + ".save");
+        if (saveFile.exists()) {
+            saveFile.delete();
+        }
+    }
+
+
 
     private void drawCornerBorders(Graphics2D g, int cx, int cy) {
         g.setColor(new Color(0, 100, 255));
@@ -705,15 +772,19 @@ public class ChessBoardPanel extends JPanel {
 
         closePauseOverlayIfOpen();
 
-        new GameOverOverlayPanel(
+        gameOverOverlay = new GameOverOverlayPanel(
                 message,
                 e -> restartGame(),
                 e -> quitToMenu()
         );
 
+        if (gameOverOverlay == null) {
+            throw new IllegalStateException("GameOverOverlayPanel failed to initialize");
+        }
 
         add(gameOverOverlay, BorderLayout.CENTER);
         revalidate();
         repaint();
     }
+
 }

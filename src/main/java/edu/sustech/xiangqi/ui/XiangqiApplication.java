@@ -7,7 +7,6 @@ import java.awt.*;
 import edu.sustech.xiangqi.audio.AudioManager;
 import edu.sustech.xiangqi.model.ChessBoardModel;
 
-
 public class XiangqiApplication {
 
     private static final File USER_FILE = new File("data/users.txt");
@@ -20,7 +19,7 @@ public class XiangqiApplication {
             AudioManager.init();
             AudioManager.play();
 
-            new File("data/saves").mkdirs(); // ✅ REQUIRED
+            new File("data/saves").mkdirs(); // ensure save folder exists
 
             JFrame frame = new JFrame("中国象棋");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -69,7 +68,7 @@ public class XiangqiApplication {
         });
     }
 
-    // ===================== NAVIGATION =====================
+    // ===================== GAME NAVIGATION =====================
 
     private static void switchToGame(JFrame frame, boolean isGuest, boolean loadSave) {
         ChessBoardModel model = new ChessBoardModel();
@@ -79,12 +78,12 @@ public class XiangqiApplication {
             saveFile = new File("data/saves/" + currentUsername + ".save");
         }
 
-        // === CONTINUE GAME ===
+        // CONTINUE GAME
         if (!isGuest && loadSave && saveFile != null && saveFile.exists()) {
             model.loadGame(saveFile.getPath());
         }
 
-        // === NEW GAME: DELETE OLD SAVE ===
+        // NEW GAME → delete old save
         if (!isGuest && !loadSave && saveFile != null && saveFile.exists()) {
             saveFile.delete();
         }
@@ -93,8 +92,12 @@ public class XiangqiApplication {
                 model,
                 isGuest,
                 currentUsername,
-                () -> switchToGame(frame, isGuest, false),   // restart
-                () -> switchToMainMenu(frame, isGuest, false)
+                () -> switchToGame(frame, isGuest, false), // restart = new game
+                () -> switchToMainMenu(
+                        frame,
+                        isGuest,
+                        !isGuest && currentUsername != null && checkSaveExists(currentUsername)
+                )
         );
 
         JPanel wrapper = new JPanel(new GridBagLayout());
@@ -105,7 +108,6 @@ public class XiangqiApplication {
         frame.revalidate();
         frame.repaint();
     }
-
 
     private static void switchToMainMenu(JFrame frame, boolean isGuest, boolean hasSave) {
         MainMenuPanel menu = new MainMenuPanel(
@@ -159,7 +161,11 @@ public class XiangqiApplication {
 
     private static void switchToSettings(JFrame frame) {
         settingsPanel = new SettingsPanel(
-                () -> switchToMainMenu(frame, false, false)
+                () -> switchToMainMenu(
+                        frame,
+                        false,
+                        currentUsername != null && checkSaveExists(currentUsername)
+                )
         );
         frame.setContentPane(settingsPanel);
         frame.revalidate();

@@ -7,67 +7,53 @@ import java.awt.event.ActionListener;
 public class GameOverOverlayPanel extends JPanel {
 
     public GameOverOverlayPanel(
-            String resultText,
+            String message,
             ActionListener onRestart,
-            ActionListener onQuitToMenu
+            ActionListener onQuit
     ) {
         setLayout(new BorderLayout());
+        setOpaque(false);
 
-        // === Dim background ===
+        // ===== Dim background =====
         JPanel dimPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
                 g.setColor(new Color(0, 0, 0, 170));
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
         };
+        dimPanel.setOpaque(false);
         dimPanel.setLayout(new GridBagLayout());
 
-        // === Center box ===
-        JPanel box = new JPanel();
-        box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+        // ===== Center box =====
+        JPanel box = new JPanel(new GridBagLayout());
         box.setBackground(Color.WHITE);
-        box.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK, 2),
-                BorderFactory.createEmptyBorder(20, 30, 20, 30)
-        ));
+        box.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
 
-        // === Title ===
-        JLabel title = new JLabel("Game Over");
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(14, 20, 14, 20);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        // ===== Title =====
+        JLabel title = new JLabel(message, SwingConstants.CENTER);
         title.setFont(new Font("Serif", Font.BOLD, 28));
+        title.setForeground(Color.BLACK);
+        box.add(title, gbc);
 
-        // === Result ===
-        JLabel result = new JLabel(resultText);
-        result.setAlignmentX(Component.CENTER_ALIGNMENT);
-        result.setFont(new Font("Serif", Font.BOLD, 22));
-
-        if (resultText.contains("Red")) {
-            result.setForeground(new Color(180, 0, 0));
-        } else if (resultText.contains("Black")) {
-            result.setForeground(Color.BLACK);
-        } else {
-            result.setForeground(Color.DARK_GRAY);
-        }
-
-        // === Buttons ===
+        // ===== Restart =====
+        gbc.gridy++;
         JButton restartButton = new JButton("Restart");
-        JButton quitButton = new JButton("Quit to Menu");
+        box.add(restartButton, gbc);
 
-        restartButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        quitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // ===== Quit =====
+        gbc.gridy++;
+        JButton quitButton = new JButton("Quit to Menu");
+        box.add(quitButton, gbc);
 
         restartButton.addActionListener(onRestart);
-        quitButton.addActionListener(onQuitToMenu);
-
-        // === Layout ===
-        box.add(title);
-        box.add(Box.createVerticalStrut(15));
-        box.add(result);
-        box.add(Box.createVerticalStrut(25));
-        box.add(restartButton);
-        box.add(Box.createVerticalStrut(10));
-        box.add(quitButton);
+        quitButton.addActionListener(onQuit);
 
         dimPanel.add(box);
         add(dimPanel, BorderLayout.CENTER);
