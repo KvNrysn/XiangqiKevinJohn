@@ -289,7 +289,7 @@ public class ChessBoardModel {
     }
 
     /** Return true if the current position has happened at least 3 times. */
-    private boolean isThreefoldRepetition() {
+    public boolean isThreefoldRepetition() {
         String key = serializePosition();
         return repetitionCounts.getOrDefault(key, 0) >= 3;
     }
@@ -399,14 +399,29 @@ public class ChessBoardModel {
 
                     AbstractPiece p = null;
                     switch (code) {
-                        case "K": p = new GeneralPiece("将/帅", row, col, isRed); break;
-                        case "A": p = new AdvisorPiece("士/仕", row, col, isRed); break;
-                        case "E": p = new ElephantPiece("象/相", row, col, isRed); break;
-                        case "H": p = new HorsePiece("马", row, col, isRed); break;
-                        case "R": p = new ChariotPiece("车", row, col, isRed); break;
-                        case "C": p = new CannonPiece("炮", row, col, isRed); break;
-                        case "P": p = new SoldierPiece("兵/卒", row, col, isRed); break;
+                        case "K":
+                            p = new GeneralPiece(isRed ? "帅" : "将", row, col, isRed);
+                            break;
+                        case "A":
+                            p = new AdvisorPiece(isRed ? "仕" : "士", row, col, isRed);
+                            break;
+                        case "E":
+                            p = new ElephantPiece(isRed ? "相" : "象", row, col, isRed);
+                            break;
+                        case "H":
+                            p = new HorsePiece("马", row, col, isRed);
+                            break;
+                        case "R":
+                            p = new ChariotPiece("车", row, col, isRed);
+                            break;
+                        case "C":
+                            p = new CannonPiece("炮", row, col, isRed);
+                            break;
+                        case "P":
+                            p = new SoldierPiece(isRed ? "兵" : "卒", row, col, isRed);
+                            break;
                     }
+
 
                     if (p != null) {
                         pieces.add(p);
