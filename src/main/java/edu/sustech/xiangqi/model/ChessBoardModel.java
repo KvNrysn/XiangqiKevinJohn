@@ -195,15 +195,14 @@ public class ChessBoardModel {
         boolean isMate = false;
 
         if (inCheck) {
-            isMate = true; // assume mate until an escape is found
-            // iterate over a snapshot of pieces to avoid concurrent modification
+            isMate = true;  // assume mate until an escape is found
+
             for (AbstractPiece enemy : new ArrayList<>(pieces)) {
                 if (enemy.isRed() != opponentIsRed) {
-                    continue; // only opponent pieces
+                    continue; // skip pcs, only opps pieces
                 }
-                int er = enemy.getRow(), ec = enemy.getCol();
-                // try all board squares as candidate moves
-                outer:
+                int er = enemy.getRow(), ec = enemy.getCol();   //save orig coord
+                outer:  // try all board squares as possbl moves
                 for (int r = 0; r < ROWS; r++) {
                     for (int c = 0; c < COLS; c++) {
                         if (!enemy.canMoveTo(r, c, this)) {
@@ -216,9 +215,9 @@ public class ChessBoardModel {
                             pieces.remove(cap2); removed = true; }
                         enemy.moveTo(r, c);
 
-                        boolean stillInCheck = generalInCheck(opponentIsRed);
+                        boolean stillInCheck = generalInCheck(opponentIsRed);   //check opps gen still in check
 
-                        // revert enemy move
+                        // undo sim move
                         enemy.moveTo(er, ec);
                         if (removed && cap2 != null) {
                             pieces.add(cap2);
@@ -229,27 +228,23 @@ public class ChessBoardModel {
                     }
                 }
                 if (!isMate) {
-                    break; // found escape, stop checking others
+                    break;
                 }
             }
         }
 
-        // revert simulated mover move
+        // undo sim mover move
         mover.moveTo(origR, origC);
         if (captured != null) {
             pieces.add(captured);
         }
 
-        return inCheck && isMate;
+        return inCheck && isMate;   //check+no escape moves
     }
 
-    // =============================================
-// THREEFOLD REPETITION HELPERS
-// =============================================
 
-    /**
-     * Convert board + player-to-move into a unique string.
-     */
+// THREEFOLD REPETITION HELPERS$$$
+
     private String serializePosition() {
         StringBuilder sb = new StringBuilder(ROWS * COLS + 2);
 
@@ -280,7 +275,7 @@ public class ChessBoardModel {
         return sb.toString();
     }
 
-    /** Store the current position, increasing its repetition counter. */
+    // Store the current position, increasing its repetition counter.
     private int recordCurrentPosition() {
         String key = serializePosition();
         int count = repetitionCounts.getOrDefault(key, 0) + 1;
@@ -288,19 +283,19 @@ public class ChessBoardModel {
         return count;
     }
 
-    /** Return true if the current position has happened at least 3 times. */
+    // Return true if the current position has happened at least 3 times.
     public boolean isThreefoldRepetition() {
         String key = serializePosition();
         return repetitionCounts.getOrDefault(key, 0) >= 3;
     }
 
-    /** Reset the repetition data (call when starting a new game). */
+    // Reset the repetition data (call when starting a new game).
     public void resetRepetitionCounts() {
         repetitionCounts.clear();
     }
 
-    // RESIGN / SURRENDER HELPERS
-    /** Mark the game as ended with a result and reason. */
+    // RESIGN HELPERSS
+    // Mark game as ended with a result && reason.
     public void endGame(String result, String reason) {
         this.gameOver = true;
         this.gameResult = result;
@@ -308,7 +303,7 @@ public class ChessBoardModel {
         System.out.println("Game ended: " + result + " reason=" + reason);
     }
 
-    /** Resign the player whose turn it currently is. */
+    // Resign the player whos current turn
     public void resignCurrentPlayer() {
         if (gameOver) return;
         boolean sideToMove = redTurn;
@@ -316,7 +311,7 @@ public class ChessBoardModel {
         endGame(result, "resign");
     }
 
-    /** Resign a specific color (true = red resigns, false = black resigns). */
+    // Resign specific color (true = red resigns, false = black resigns)
     public void resignPlayer(boolean isRed) {
         if (gameOver) {
             return;
@@ -326,8 +321,7 @@ public class ChessBoardModel {
     }
 
 
-    // SAVE GAME (TASK 2)
-
+    // SAVE GAME
     public void saveGame(String filename) {
         try (PrintWriter out = new PrintWriter(new FileWriter(filename))) {
 
@@ -374,8 +368,7 @@ public class ChessBoardModel {
         }
     }
 
-    // LOAD GAME (TASK 2)
-
+    // LOAD GAME
     public void loadGame(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
 
@@ -443,12 +436,7 @@ public class ChessBoardModel {
     }
 
 
-    // TASK 3: AUTO-SAVE ON EXIT
-    /**
-     * Automatically save the game when the program exits.
-     * This uses a shutdown hook, meaning when the application closes,
-     * this code will run once and call saveGame("autosave.txt").
-     */
+    //AUTO-SAVE
     public void enableAutoSaveOnExit() {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -458,19 +446,7 @@ public class ChessBoardModel {
     }
 
     // STALEMATE + ENDGAME CODE
-    /**
-     * Return true if the given side (isRed) has at least one legal move.
-     *
-     * A legal move must:
-     *  1) obey the piece's own movement rules (handled by canMoveTo)
-     *  2) not capture a friendly piece
-     *  3) not leave the moving side's General in check after the move
-     *
-     * This method tries every destination square for every piece of the given side
-     * and returns true as soon as it finds one legal move.
-     */
     public boolean hasLegalMove(boolean isRed) {
-        // Iterate over a snapshot of pieces to avoid concurrent modification if any external code mutates pieces
         for (AbstractPiece p : new ArrayList<>(pieces)) {
             if (p == null) {
                 continue;
@@ -482,7 +458,7 @@ public class ChessBoardModel {
             int sr = p.getRow();
             int sc = p.getCol();
 
-            // Try every board square as a candidate destination
+            // Try every board square as a possible destination
             for (int tr = 0; tr < ROWS; tr++) {
                 for (int tc = 0; tc < COLS; tc++) {
 
@@ -513,44 +489,34 @@ public class ChessBoardModel {
         return false;
     }
 
-    /**
-     * Returns true if the player 'isRed' is in stalemate.
-     * Stalemate definition in Xiangqi:
-     *   - The player's general is NOT in check
-     *   - The player has NO legal moves
-     *
-     * In Xiangqi stalemate = DRAW.
-     */
+//      Returns true if the player 'isRed' is in stalemate.
+//        - The player's general is NOT in check
+//        - The player has NO legal moves
+//
     public boolean isStalemate(boolean isRed) {
-        // If in check, it's not stalemate (it might be checkmate)
+        // If in check, it's not stalemate
         if (generalInCheck(isRed)) {
             return false;
         }
 
-        // If there is at least one legal move, not stalemate
+        // If theres at least one legal move, not stalemate
         if (hasLegalMove(isRed)) {
             return false;
         }
-
-        // Not in check and no legal moves => stalemate
         return true;
     }
 
-    /**
-     * Unified endgame checker to call after a move completes (after you switch turn).
-     * Returns one of:
-     *   - "RED_WIN", "BLACK_WIN", "DRAW", "NONE"
-     *
-     * It uses:
-     *  - generalInCheck(side) : whether the side's general is currently in check
-     *  - hasLegalMove(side) : whether the side has any legal move
-     *
-     * Important: call this AFTER you have updated redTurn (the player to move) so sideToMove is accurate.
-     */
+
+//     returns one of:
+//     - "RED_WIN", "BLACK_WIN", "DRAW", "NONE"
+//     uses:
+//     - generalInCheck(side) : whether the side's general is currently in check
+//     - hasLegalMove(side) : whether the side has any legal move
+//     - note: call this after it have updated redTurn (the player to move) so sideToMove is accrt.
     public String checkEndgame() {
         boolean sideToMove = redTurn; // true if red to move, false if black to move
 
-        // 1) Checkmate: side-to-move IN check AND has NO legal moves
+        // 1) Checkmate: side-to-move in check and has noo legal moves
         if (generalInCheck(sideToMove) && !hasLegalMove(sideToMove)) {
             // sideToMove is checkmated -> opponent wins
             if (sideToMove) {
@@ -559,39 +525,31 @@ public class ChessBoardModel {
             else return "RED_WIN";
         }
 
-        // 2) Stalemate (Xiangi): side-to-move NOT in check AND has NO legal moves -> DRAW
+        // 2) Stalemate: side-to-move NOT in check AND has NO legal moves => DRAW
         if (!generalInCheck(sideToMove) && !hasLegalMove(sideToMove)) {
-            return "DRAW"; // stalemate
+            return "DRAW";
         }
 
         // Threefold repetition rule
         if (isThreefoldRepetition()) {
             return "DRAW";
         }
-
-        // 3) Optional other draw rules (repetition, dead position) can be added here.
-        // Example placeholders (implement those methods if you want):
-        // if (isThreefoldRepetition()) return "DRAW";
-        // if (isDeadPosition()) return "DRAW";
-
-        // No end condition reached
         return "NONE";
     }
 
     public boolean movePiece(AbstractPiece piece, int newRow, int newCol) {
-        /**
-     * Main move method used by the UI.
-     * It checks:
-     * - board boundaries
-     * - whose turn it is
-     * - cannot capture your own piece
-     * - piece movement rules (canMoveTo)
-     * - capturing (removing target from list)
-     * - updates the piece position
-     * - switches the turn
-     */
+//     Main move method used by UI
+//     checks:
+//     - board boundaries
+//     - whose turn it is
+//     - cannot capture your own piece
+//     - piece movement rules (canMoveTo)
+//     - capturing (removing target from list)
+//     - updates the piece position
+//     - switches the turn
+
         if (piece == null) {
-            return false;                        // no piece selected
+            return false;
         }
         if (!isValidPosition(newRow, newCol)) {
             return false;     // outside board
@@ -607,25 +565,25 @@ public class ChessBoardModel {
             return false;
         }
 
-        // piece-specific movement rules
+        // specific piece movement rules
         if (!piece.canMoveTo(newRow, newCol, this)) {
             return false;
         }
 
-        //do not allow moves that leave your own general in check
+        //do not allow moves => leave your own general in check
         if (moveLeavesOwnGeneralInCheck(piece.getRow(), piece.getCol(), newRow, newCol)) {
             return false;
         }
 
-        // remember origin for check/checkmate checks later
+        // remember origin for check/checkmate checks ltr
         int origRow = piece.getRow();
         int origCol = piece.getCol();
 
-        // record last-move "from" for UI
+        // record last-move for UI
         lastFromRow = origRow;
         lastFromCol = origCol;
 
-        // *** simulate whether this move would cause check/checkmate BEFORE applying it to the real board ***
+        // simulate whether this move would cause check/checkmate before apply to real board
         // (causesCheck / causesCheckmate expect the mover to still be at (origRow,origCol))
         boolean causedCheck = causesCheck(origRow, origCol, newRow, newCol);
         boolean causedCheckmate = causesCheckmate(origRow, origCol, newRow, newCol);
@@ -636,11 +594,11 @@ public class ChessBoardModel {
         }
         piece.moveTo(newRow, newCol);
 
-        // now update last-move fields with the previously computed results
+        // update last-move fields
         lastMoveCausedCheck = causedCheck;
         lastMoveCausedCheckmate = causedCheckmate;
 
-        // record last-move "to" for UI highlighting
+        // record last-move "to" for UI
         lastToRow = newRow;
         lastToCol = newCol;
         hasLastMove = true;
@@ -648,31 +606,26 @@ public class ChessBoardModel {
         // switch turn
         redTurn = !redTurn;
 
-        // --- record repetition after switching turn ---
+        // record repetition after switching turn
         int occurrences = recordCurrentPosition();
         if (occurrences >= 3) {
             // This is a draw by threefold repetition
-            // You can notify UI here or let checkEndgame() handle it
             System.out.println("Draw by repetition");
         }
 
         // Now check the endgame condition
         String end = checkEndgame();
         if ("RED_WIN".equals(end)) {
-            // Notify UI / set game state: Red wins
-            // e.g., gameResult = GameResult.RED_WIN; emitGameEnd(...);
+            // notify UI / set game state && game result: Red wins
         }
         else if ("BLACK_WIN".equals(end)) {
-            // Notify UI / set game state: Black wins
         }
         else if ("DRAW".equals(end)) {
-            // Notify UI that game ended in a draw. Determine reason if needed:
+            // notify UI that game ended in a draw and reason
             if (isStalemate(redTurn)) {
-                // send { result:"DRAW", reason:"stalemate" } to frontend
-            } else if (/* check repetition or dead-position */ false) {
-                // send appropriate reason field
+                // send result:"DRAW", reason:"stalemate" to frontend
+            } else if ( false) {
             } else {
-                // generic draw
             }
         }
         else {
@@ -687,7 +640,7 @@ public class ChessBoardModel {
     }
 
     public boolean isRedTurn() {
-        return redTurn;                            // tells whose turn it is (useful for UI or debugging)
+        return redTurn;                            //whose turn it is
     }
 
     public static int getRows() {
