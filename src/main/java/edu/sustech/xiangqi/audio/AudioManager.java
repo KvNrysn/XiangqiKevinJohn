@@ -1,90 +1,136 @@
 package edu.sustech.xiangqi.audio;
 
 import javax.sound.sampled.*;
-import java.io.BufferedInputStream;
-import java.io.InputStream;
+import java.net.URL;
+import java.util.Map;
 
-public class AudioManager {
+public final class AudioManager {
 
+    // ================== FLAGS ==================
+    private static boolean musicEnabled = true;
+    private static boolean sfxEnabled = true;
+
+    // ================== BGM ==================
     private static Clip bgmClip;
-    private static boolean enabled = true;
-    private static float volume = 0.6f;
+    private static FloatControl bgmVolume;
 
-    private AudioManager() {}
+    // Persisted volume state (0.0f – 1.0f)
+    private static float musicVolume = 0.6f;
+    private static float sfxVolume = 0.6f; // kept for future use
 
-    // Call ONCE at app startup
+    // ================== SFX REGISTRY ==================
+    private static final Map<String, String> SFX_MAP = Map.of(
+            "click",     "/audio/click.wav",
+            "move",      "/audio/move.wav",
+            "capture",   "/audio/capture.wav",
+            "check",     "/audio/check.wav",
+            "illegal",   "/audio/illegal.wav",
+            "gameover",  "/audio/gameover.wav"
+    );
+
+    // ================== INIT ==================
     public static void init() {
-        if (bgmClip != null) return;
+        initBGM("/audio/tenxi.wav");
+        setMusicVolume(musicVolume); // apply default volume
+    }
 
+    private static void initBGM(String path) {
         try {
-            InputStream raw =
-                    AudioManager.class.getResourceAsStream("/audio/tenxi.wav");
-
-            if (raw == null) {
-                throw new RuntimeException("BGM not found: /audio/tenxi.wav");
+            URL url = AudioManager.class.getResource(path);
+            if (url == null) {
+                throw new RuntimeException("BGM not found: " + path);
             }
 
-            AudioInputStream ais = AudioSystem.getAudioInputStream(
-                    new BufferedInputStream(raw)
-            );
-
+            AudioInputStream ais = AudioSystem.getAudioInputStream(url);
             bgmClip = AudioSystem.getClip();
             bgmClip.open(ais);
-            applyVolume();
 
-            if (enabled) {
+            bgmVolume = (FloatControl) bgmClip.getControl(FloatControl.Type.MASTER_GAIN);
+
+            if (musicEnabled) {
                 bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
             }
-
         } catch (Exception e) {
-            System.err.println("Failed to init background music:");
+            System.err.println("Failed to initialize BGM");
             e.printStackTrace();
         }
     }
 
-    public static void play() {
-        if (!enabled || bgmClip == null) return;
+    // ================== MUSIC CONTROL ==================
+    public static void setMusicEnabled(boolean enabled) {
+        musicEnabled = enabled;
+        if (bgmClip == null) return;
 
-        if (!bgmClip.isRunning()) {
-            bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
-        }
-    }
-
-    public static void stop() {
-        if (bgmClip != null && bgmClip.isRunning()) {
+        if (enabled) {
+            if (!bgmClip.isRunning()) {
+                bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
+            }
+        } else {
             bgmClip.stop();
         }
     }
 
-    public static void setEnabled(boolean on) {
-        enabled = on;
-        if (on) play();
-        else stop();
+    public static boolean isMusicEnabled() {
+        return musicEnabled;
     }
 
-    public static boolean isEnabled() {
-        return enabled;
+    public static void setMusicVolume(float volume) {
+        // clamp
+        musicVolume = Math.max(0f, Math.min(1f, volume));
+
+        if (bgmVolume == null) return;
+
+        float min = bgmVolume.getMinimum();
+        float max = bgmVolume.getMaximum();
+        bgmVolume.setValue(min + (max - min) * musicVolume);
     }
 
-    public static void setVolume(float v) {
-        volume = Math.max(0f, Math.min(1f, v));
-        applyVolume();
+    public static float getMusicVolume() {
+        return musicVolume;
     }
 
-    public static float getVolume() {
-        return volume;
-    }
+    // ================== SFX ==================
+    public static void playSFX(String key) {
+        if (!sfxEnabled) return;
 
-    private static void applyVolume() {
-        if (bgmClip == null) return;
+        String path = SFX_MAP.get(key);
+        if (path == null) {
+            System.err.println("Unknown SFX key: " + key);
+            return;
+        }
 
-        if (bgmClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-            FloatControl gain =
-                    (FloatControl) bgmClip.getControl(FloatControl.Type.MASTER_GAIN);
+        try {
+            URL url = AudioManager.class.getResource(path);
+            if (url == null) {
+                System.err.println("Missing SFX file: " + path);
+                return;
+            }
 
-            float min = gain.getMinimum();
-            float max = gain.getMaximum();
-            gain.setValue(min + (max - min) * volume);
+            AudioInputStream ais = AudioSystem.getAudioInputStream(url);
+            Clip clip = AudioSystem.getClip();
+            clip.open(ais);
+
+            clip.addLineListener(e -> {
+                if (e.getType() == LineEvent.Type.STOP) {
+                    clip.close();
+                }
+            });
+
+            clip.start();
+
+        } catch (Exception e) {
+            System.err.println("Failed to play SFX: " + key);
+            e.printStackTrace();
         }
     }
+
+    public static void setSfxEnabled(boolean enabled) {
+        sfxEnabled = enabled;
+    }
+
+    public static boolean isSfxEnabled() {
+        return sfxEnabled;
+    }
+
+    private AudioManager() {}
 }

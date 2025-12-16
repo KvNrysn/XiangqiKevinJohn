@@ -9,6 +9,13 @@ import java.io.*;       //sv&load game state via file
 
 public class ChessBoardModel {
 
+
+    private final List<Move> moveHistory = new ArrayList<>();
+    public List<Move> getMoveHistory() {
+        return new ArrayList<>(moveHistory); // defensive copy
+    }
+
+
     private final List<AbstractPiece> pieces; // stores every pcs
     private static final int ROWS = 10;
     private static final int COLS = 9;
@@ -80,6 +87,38 @@ public class ChessBoardModel {
     public List<AbstractPiece> getPieces() {
         return pieces;
     }
+
+    public static class Move {
+        public final boolean red;
+        public final String piece;
+        public final int fromRow, fromCol;
+        public final int toRow, toCol;
+        public final boolean capture;
+        public final boolean check;
+        public final boolean checkmate;
+
+        public Move(
+                boolean red,
+                String piece,
+                int fromRow, int fromCol,
+                int toRow, int toCol,
+                boolean capture,
+                boolean check,
+                boolean checkmate
+        ) {
+            this.red = red;
+            this.piece = piece;
+            this.fromRow = fromRow;
+            this.fromCol = fromCol;
+            this.toRow = toRow;
+            this.toCol = toCol;
+            this.capture = capture;
+            this.check = check;
+            this.checkmate = checkmate;
+        }
+    }
+
+
 
     public AbstractPiece getPieceAt(int row, int col) {
         for (AbstractPiece piece : pieces) {  // loop through all pieces
@@ -166,6 +205,7 @@ public class ChessBoardModel {
         }
         return simulateMoveCheck(mover, toR, toC, mover.isRed()); // check sim move gen
     }
+
 
     public boolean causesCheck(int fromR, int fromC, int toR, int toC) {
         AbstractPiece mover = getPieceAt(fromR, fromC);
@@ -374,6 +414,7 @@ public class ChessBoardModel {
 
             // clear current board
             pieces.clear();
+            moveHistory.clear();
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -602,6 +643,30 @@ public class ChessBoardModel {
         lastToRow = newRow;
         lastToCol = newCol;
         hasLastMove = true;
+
+        boolean wasCapture = (target != null);
+
+        moveHistory.add(new Move(
+                piece.isRed(),
+                piece.getName(),
+                origRow,
+                origCol,
+                newRow,
+                newCol,
+                wasCapture,
+                lastMoveCausedCheck,
+                lastMoveCausedCheckmate
+        ));
+
+        System.out.println(
+                "[MOVE] " +
+                        (piece.isRed() ? "Red " : "Black ") +
+                        piece.getName() +
+                        " (" + origRow + "," + origCol + ") -> (" +
+                        newRow + "," + newCol + ")"
+        );
+
+
 
         // switch turn
         redTurn = !redTurn;

@@ -10,16 +10,18 @@ import edu.sustech.xiangqi.model.ChessBoardModel;
 public class XiangqiApplication {
 
     private static final File USER_FILE = new File("data/users.txt");
-    private static SettingsPanel settingsPanel;
     private static String currentUsername = null;
 
     public static void main(String[] args) {
 
         SwingUtilities.invokeLater(() -> {
+            // ===== Audio bootstrap (ONCE) =====
             AudioManager.init();
-            AudioManager.play();
 
-            new File("data/saves").mkdirs(); // ensure save folder exists
+            // ===== Ensure folders/files exist =====
+            new File("data").mkdirs();
+            new File("data/saves").mkdirs();
+            ensureUserFileExists();
 
             JFrame frame = new JFrame("中国象棋");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -29,7 +31,9 @@ public class XiangqiApplication {
 
             final LoginPanel[] loginPanel = new LoginPanel[1];
 
+            // IMPORTANT: argument order MUST match LoginPanel(ActionListener onLogin, onRegister, onGuest)
             loginPanel[0] = new LoginPanel(
+                    // ===================== LOGIN =====================
                     e -> {
                         String u = loginPanel[0].getUsername();
                         String p = loginPanel[0].getPassword();
@@ -46,9 +50,17 @@ public class XiangqiApplication {
                             loginPanel[0].setMessage("Invalid username or password.");
                         }
                     },
+
+                    // ===================== REGISTER =====================
                     e -> {
                         String u = loginPanel[0].getUsername();
                         String p = loginPanel[0].getPassword();
+
+                        // Prevent empty registration
+                        if (u.isEmpty() || p.isEmpty()) {
+                            loginPanel[0].setMessage("Username and password cannot be empty.");
+                            return;
+                        }
 
                         if (userExists(u)) {
                             loginPanel[0].setMessage("User already exists.");
@@ -57,6 +69,8 @@ public class XiangqiApplication {
                             loginPanel[0].setMessage("Registration successful!");
                         }
                     },
+
+                    // ===================== GUEST =====================
                     e -> {
                         currentUsername = null;
                         switchToMainMenu(frame, true, false);
@@ -78,12 +92,12 @@ public class XiangqiApplication {
             saveFile = new File("data/saves/" + currentUsername + ".save");
         }
 
-        // CONTINUE GAME
+        // === CONTINUE GAME ===
         if (!isGuest && loadSave && saveFile != null && saveFile.exists()) {
             model.loadGame(saveFile.getPath());
         }
 
-        // NEW GAME → delete old save
+        // === NEW GAME → DELETE OLD SAVE ===
         if (!isGuest && !loadSave && saveFile != null && saveFile.exists()) {
             saveFile.delete();
         }
@@ -92,7 +106,7 @@ public class XiangqiApplication {
                 model,
                 isGuest,
                 currentUsername,
-                () -> switchToGame(frame, isGuest, false), // restart = new game
+                () -> switchToGame(frame, isGuest, false), // restart
                 () -> switchToMainMenu(
                         frame,
                         isGuest,
@@ -124,6 +138,20 @@ public class XiangqiApplication {
         frame.repaint();
     }
 
+    // ===================== SETTINGS =====================
+
+    private static void switchToSettings(JFrame frame) {
+        SettingsPanel settingsPanel = new SettingsPanel(
+                () -> switchToMainMenu(
+                        frame,
+                        false,
+                        currentUsername != null && checkSaveExists(currentUsername)
+                )
+        );
+        frame.setContentPane(settingsPanel);
+        frame.revalidate();
+    }
+
     // ===================== SAVE CHECK =====================
 
     private static boolean checkSaveExists(String username) {
@@ -132,12 +160,25 @@ public class XiangqiApplication {
 
     // ===================== USER FILE =====================
 
+    private static void ensureUserFileExists() {
+        try {
+            File parent = USER_FILE.getParentFile();
+            if (parent != null) parent.mkdirs();
+            if (!USER_FILE.exists()) {
+                USER_FILE.createNewFile();
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to create users file: " + USER_FILE.getPath());
+            e.printStackTrace();
+        }
+    }
+
     private static boolean checkCredentials(String u, String p) {
         try (BufferedReader br = new BufferedReader(new FileReader(USER_FILE))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] s = line.split(":");
-                if (s[0].equals(u) && s[1].equals(p)) return true;
+                if (s.length >= 2 && s[0].equals(u) && s[1].equals(p)) return true;
             }
         } catch (IOException ignored) {}
         return false;
@@ -146,8 +187,9 @@ public class XiangqiApplication {
     private static boolean userExists(String u) {
         try (BufferedReader br = new BufferedReader(new FileReader(USER_FILE))) {
             String line;
-            while ((line = br.readLine()) != null)
+            while ((line = br.readLine()) != null) {
                 if (line.startsWith(u + ":")) return true;
+            }
         } catch (IOException ignored) {}
         return false;
     }
@@ -157,17 +199,5 @@ public class XiangqiApplication {
             bw.write(u + ":" + p);
             bw.newLine();
         } catch (IOException ignored) {}
-    }
-
-    private static void switchToSettings(JFrame frame) {
-        settingsPanel = new SettingsPanel(
-                () -> switchToMainMenu(
-                        frame,
-                        false,
-                        currentUsername != null && checkSaveExists(currentUsername)
-                )
-        );
-        frame.setContentPane(settingsPanel);
-        frame.revalidate();
     }
 }
