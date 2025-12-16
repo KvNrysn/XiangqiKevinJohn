@@ -11,36 +11,37 @@ public class SoldierPiece extends AbstractPiece {
         int currentRow = getRow();
         int currentCol = getCol();
 
-
         if (currentRow == targetRow && currentCol == targetCol) {
-            return false;   // Cannot "move" to its same location
+            return false;
         }
 
         int rowDiff = targetRow - currentRow;
         int colDiff = Math.abs(targetCol - currentCol);
 
-        if (isRed()) {  // Determine if the soldier has crossed the river (river between row 4&5)
-            boolean crossedRiver = currentRow < 5;  // Red soldiers move upward (row decreases)
+        if (isRed()) {  // if red cross river
+            boolean crossedRiver = currentRow < 5;  //river between row 4&5
 
             if (!crossedRiver) {
-                return rowDiff == -1 && colDiff == 0;  // Before crossing: can only move forward one step
+                return rowDiff == -1 && colDiff == 0;
             }
-            else {    //after crossing
-                if (rowDiff == -1 && colDiff == 0) return true; // can move forward
-                return rowDiff == 0 && colDiff == 1;            // can move left or right
+            else {
+                if (rowDiff == -1 && colDiff == 0) {
+                    return true;
+                }
+                return rowDiff == 0 && colDiff == 1;
             }
 
         }
-        else {
-            boolean crossedRiver = currentRow >= 5;  // Black soldiers move downward (row increases)
+        else {  //if black cross river
+            boolean crossedRiver = currentRow >= 5;
             if (!crossedRiver) {
-                return rowDiff == 1 && colDiff == 0;  // Before crossing: can only move forward one step
+                return rowDiff == 1 && colDiff == 0;
             }
-            else {    // After crossing
+            else {
                 if (rowDiff == 1 && colDiff == 0) {
-                    return true; // can move forward
+                    return true;
                 }
-                return rowDiff == 0 && colDiff == 1;           // can move left or right
+                return rowDiff == 0 && colDiff == 1;
             }
         }
     }

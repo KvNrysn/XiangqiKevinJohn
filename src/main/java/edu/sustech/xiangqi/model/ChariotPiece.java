@@ -1,52 +1,45 @@
 package edu.sustech.xiangqi.model;
 
-/**
- * 车
- */
 public class ChariotPiece extends AbstractPiece {
 
     public ChariotPiece(String name, int row, int col, boolean isRed) {
-        super(name, row, col, isRed); // init basic data
+        super(name, row, col, isRed);
     }
-
     @Override
     public boolean canMoveTo(int targetRow, int targetCol, ChessBoardModel model) {
-        int currentRow = getRow();   // current row
-        int currentCol = getCol();   // current column
-
+        int currentRow = getRow();
+        int currentCol = getCol();
         if (currentRow == targetRow && currentCol == targetCol) {
-            return false; // no move
+            return false;
         }
 
-        // 车只能直走 (same row or same column)
-        boolean sameRow = currentRow == targetRow;       // horizontal move
-        boolean sameCol = currentCol == targetCol;       // vertical move
+        boolean sameRow = currentRow == targetRow;
+        boolean sameCol = currentCol == targetCol;
         if (!sameRow && !sameCol) {
             return false;          // diagonal/other is illegal
         }
+        //check blocking pieces (horizontal)
+        if (sameRow) {
+            int start = Math.min(currentCol, targetCol) + 1;    //first square after the Chariot
+            int end = Math.max(currentCol, targetCol);  //stop before the target square
 
-        // 检查中间有没有棋子 (no pieces in between)
-        if (sameRow) { // horizontal move
-            int start = Math.min(currentCol, targetCol) + 1; // first middle col
-            int end = Math.max(currentCol, targetCol);       // last exclusive
-
-            for (int c = start; c < end; c++) {              // traverse columns between
+            for (int c = start; c < end; c++) {              //for loops check pcs
                 if (model.getPieceAt(currentRow, c) != null) {
                     return false; // blocked
                 }
             }
-        } else { // sameCol, vertical move
-            int start = Math.min(currentRow, targetRow) + 1; // first middle row
-            int end = Math.max(currentRow, targetRow);       // last exclusive
+        }
+        else {  //check pcs vertical
+            int start = Math.min(currentRow, targetRow) + 1;
+            int end = Math.max(currentRow, targetRow);
 
-            for (int r = start; r < end; r++) {              // traverse rows between
+            for (int r = start; r < end; r++) {
                 if (model.getPieceAt(r, currentCol) != null) {
-                    return false; // blocked
+                    return false;
                 }
             }
         }
-
-        return true; // path clear, geometry OK
+        return true;
     }
 }
 

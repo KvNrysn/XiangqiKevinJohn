@@ -1,52 +1,46 @@
 package edu.sustech.xiangqi.model;
 
-/**
- * 马
- */
 public class HorsePiece extends AbstractPiece {
-
     public HorsePiece(String name, int row, int col, boolean isRed) {
-        super(name, row, col, isRed); // pass to base class
+        super(name, row, col, isRed);
     }
 
     @Override
     public boolean canMoveTo(int targetRow, int targetCol, ChessBoardModel model) {
-        int currentRow = getRow();   // current row
-        int currentCol = getCol();   // current column
+        int currentRow = getRow();
+        int currentCol = getCol();
 
         if (currentRow == targetRow && currentCol == targetCol) {
-            return false; // same place
+            return false;
         }
 
-        int rowDiff = targetRow - currentRow;           // signed row diff
-        int colDiff = targetCol - currentCol;           // signed col diff
-        int absRowDiff = Math.abs(rowDiff);             // |rowDiff|
-        int absColDiff = Math.abs(colDiff);             // |colDiff|
+        int rowDiff = targetRow - currentRow;
+        int colDiff = targetCol - currentCol;
+        int absRowDiff = Math.abs(rowDiff);
+        int absColDiff = Math.abs(colDiff);
 
-        // The horse moves in the shape of the Chinese character 日: one step straight and one step diagonal — either (1,2) or (2,1).
-        boolean shapeOK = (absRowDiff == 2 && absColDiff == 1) || (absRowDiff == 1 && absColDiff == 2); // check L shape
+
+        boolean shapeOK =
+                (absRowDiff == 2 && absColDiff == 1) || (absRowDiff == 1 && absColDiff == 2);
         if (!shapeOK) {
-            return false; // not a horse move
+            return false;
         }
 
-        // (horse leg cannot be blocked)
-        int legRow;  // position of the blocking square
+        // horse leg
+        int legRow;
         int legCol;
-
-        if (absRowDiff == 2) { // moving mainly in row direction
-            legRow = currentRow + (rowDiff > 0 ? 1 : -1); // one step in row direction
-            legCol = currentCol;                          // same column
+        if (absRowDiff == 2) {  //mostly moving vertically
+            legRow = currentRow + (rowDiff > 0 ? 1 : -1); // one step in row direction, came column
+            legCol = currentCol;
         }
-        else { // absColDiff == 2, moving mainly in column direction
+        else {
             legRow = currentRow;                          // same row
             legCol = currentCol + (colDiff > 0 ? 1 : -1); // one step in col direction
         }
-
         if (model.getPieceAt(legRow, legCol) != null) {
-            return false; // horse leg blocked
+            return false;
         }
-
-        return true; // legal horse move
+        return true;
     }
 }
 

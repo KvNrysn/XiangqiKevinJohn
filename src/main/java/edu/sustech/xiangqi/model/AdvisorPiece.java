@@ -1,39 +1,32 @@
 package edu.sustech.xiangqi.model;
-    /**
-     * 士 / 仕
-     */
     public class AdvisorPiece extends AbstractPiece {
 
         public AdvisorPiece(String name, int row, int col, boolean isRed) {
-            super(name, row, col, isRed); // pass basic info to AbstractPiece
+            super(name, row, col, isRed);
         }
 
         @Override
         public boolean canMoveTo(int targetRow, int targetCol, ChessBoardModel model) {
-            int currentRow = getRow();   // current row
-            int currentCol = getCol();   // current column
+            int currentRow = getRow();
+            int currentCol = getCol();
 
             if (currentRow == targetRow && currentCol == targetCol) {
-                return false; // can't stay in place
+                return false;
             }
-
-            // palace only
-            // Red palace: rows 7-9, cols 3-5
-            // Black palace: rows 0-2, cols 3-5
-            if (isRed()) { // red side
+            if (isRed()) {
                 if (targetRow < 7 || targetRow > 9 || targetCol < 3 || targetCol > 5) {
-                    return false; // outside palace
+                    return false;
                 }
-            } else { // black side
+            }
+            else {
                 if (targetRow < 0 || targetRow > 2 || targetCol < 3 || targetCol > 5) {
-                    return false; // outside palace
+                    return false;
                 }
             }
 
-            int rowDiff = Math.abs(targetRow - currentRow); // row distance
-            int colDiff = Math.abs(targetCol - currentCol); // col distance
+            int rowDiff = Math.abs(targetRow - currentRow);
+            int colDiff = Math.abs(targetCol - currentCol);
 
-            // (move 1 step diagonally)
-            return rowDiff == 1 && colDiff == 1; // true if exactly one-step diagonal
+            return rowDiff == 1 && colDiff == 1;
         }
     }

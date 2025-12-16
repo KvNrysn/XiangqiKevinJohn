@@ -4,30 +4,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.io.*;
+import java.io.*;       //sv&load game state via file
 
 
 public class ChessBoardModel {
 
-    private final List<AbstractPiece> pieces; // stores every piece currently on the board
-    private static final int ROWS = 10;       // Xiangqi has 10 rows
-    private static final int COLS = 9;        // Xiangqi has 9 columns
-    private boolean redTurn = true;           // true = red's turn, false = black's turn
+    private final List<AbstractPiece> pieces; // stores every pcs
+    private static final int ROWS = 10;
+    private static final int COLS = 9;
+    private boolean redTurn = true;     // true = red's turn, false = black's turn
 
-    // last move (for UI highlighting)
+    // last move for UI
     private int lastFromRow = -1;
     private int lastFromCol = -1;
     private int lastToRow = -1;
     private int lastToCol = -1;
     private boolean hasLastMove = false;
 
-    // --- Game end state (for resign and UI) ---
+    //Game end state for resign&UI
     private boolean gameOver = false;
-    private String gameResult = "NONE";    // "RED_WIN", "BLACK_WIN", "DRAW", "NONE"
-    private String gameEndReason = null;   // e.g. "stalemate", "threefold_repetition", "resign"
+    private String gameResult = "NONE";    // default ans
+    private String gameEndReason = null;   //
 
-    // --- Repetition Tracking ---
-    private final Map<String, Integer> repetitionCounts = new HashMap<>();
+    //repetition
+    private final Map<String, Integer> repetitionCounts = new HashMap<>();  //for threefold repetition, board position => nmbr of times seen
+    //hashmap= effcnt bt itung rep
 
     public ChessBoardModel() {
         pieces = new ArrayList<>();           // create the list
@@ -35,7 +36,7 @@ public class ChessBoardModel {
     }
 
     private void initializePieces() {
-        // ---------- Black side ----------
+        //Black side
         pieces.add(new GeneralPiece("将", 0, 4, false));        // black general
         pieces.add(new AdvisorPiece("士", 0, 3, false));        // black advisors
         pieces.add(new AdvisorPiece("士", 0, 5, false));
@@ -77,7 +78,7 @@ public class ChessBoardModel {
     }
 
     public List<AbstractPiece> getPieces() {
-        return pieces;                        // return the list of all active pieces
+        return pieces;
     }
 
     public AbstractPiece getPieceAt(int row, int col) {
@@ -86,28 +87,28 @@ public class ChessBoardModel {
                 return piece;                // found a piece at this position
             }
         }
-        return null;                         // empty square
+        return null;
     }
 
-    public AbstractPiece findOtherGeneral(AbstractPiece current) { // used for flying-general rule
+    public AbstractPiece findOtherGeneral(AbstractPiece current) {
         for (AbstractPiece piece : pieces) {
-            if (piece instanceof GeneralPiece       // must be a general
-                    && piece != current             // not the same one
-                    && piece.isRed() != current.isRed()) { // opposite side
-                return piece;                       // return the enemy general
+            if (piece instanceof GeneralPiece       // pc type checking, find general
+                    && piece != current             // check obj identity, not the same one
+                    && piece.isRed() != current.isRed()) { // oppst side/color
+                return piece; //return enemy general
             }
         }
-        return null;                                // should not happen in a normal game
+        return null;
     }
 
-    public boolean isValidPosition(int row, int col) {
-        return row >= 0 && row < ROWS              // inside board vertically
-                && col >= 0 && col < COLS;         // inside board horizontally
+    public boolean isValidPosition(int row, int col) {      //ensures moves stay inside board
+        return row >= 0 && row < ROWS
+                && col >= 0 && col < COLS;
     }
 
-    // ---- check / simulation helpers ----
-    private boolean lastMoveCausedCheck = false;     // optional: UI/test readouts
-    private boolean lastMoveCausedCheckmate = false; // optional: UI/test readouts
+    //check / simulation helpers
+    private boolean lastMoveCausedCheck = false;     //UI/test readouts
+    private boolean lastMoveCausedCheckmate = false; //UI/test readouts
 
     // find the general piece for a side (true = red, false = black)
     public AbstractPiece findGeneral(boolean isRed) {
@@ -119,15 +120,16 @@ public class ChessBoardModel {
         return null;
     }
 
-    // is the general of 'isRed' currently under attack?
+    //check if given sides general under attk
     public boolean generalInCheck(boolean isRed) {
-        AbstractPiece g = findGeneral(isRed);            // find the general
+        AbstractPiece g = findGeneral(isRed);
         if (g == null) {
             return false;
         }
-        int gr = g.getRow(), gc = g.getCol();
+        int gr = g.getRow();
+        int gc = g.getCol();
 
-        for (AbstractPiece p : pieces) {                 // check every enemy piece
+        for (AbstractPiece p : pieces) {
             if (p.isRed() == isRed) {
                 continue;            // skip same side
             }
@@ -137,36 +139,34 @@ public class ChessBoardModel {
         }
         return false;
     }
-
-    // tiny simulator: move mover to (toR,toC), remove captured if any, run checkRed test, then revert
+    //sim helper
     private boolean simulateMoveCheck(AbstractPiece mover, int toR, int toC, boolean checkRed) {
         int fromR = mover.getRow(), fromC = mover.getCol();
-        AbstractPiece captured = getPieceAt(toR, toC);   // maybe null
+        AbstractPiece captured = getPieceAt(toR, toC);
         if (captured != null) {
-            pieces.remove(captured);   // remove captured for simulation
+            pieces.remove(captured);   // sim capture
         }
-        mover.moveTo(toR, toC);                          // simulate move
+        mover.moveTo(toR, toC);    // sim move
 
-        boolean result = generalInCheck(checkRed);       // check condition on simulated board
+        boolean result = generalInCheck(checkRed);  //sim checked
 
         // revert simulation
         mover.moveTo(fromR, fromC);
         if (captured != null) {
-            pieces.add(captured);     // restore captured piece
+            pieces.add(captured);     // restore captured piece as before
         }
         return result;
     }
 
-    // would moving from->to leave mover's own general in check? (true => illegal)
+    //illegal expose general
     public boolean moveLeavesOwnGeneralInCheck(int fromR, int fromC, int toR, int toC) {
         AbstractPiece mover = getPieceAt(fromR, fromC);
         if (mover == null) {
             return false;
         }
-        return simulateMoveCheck(mover, toR, toC, mover.isRed()); // check mover's general after the simulated move
+        return simulateMoveCheck(mover, toR, toC, mover.isRed()); // check sim move gen
     }
 
-    // does the move cause the opponent's general to be in check?
     public boolean causesCheck(int fromR, int fromC, int toR, int toC) {
         AbstractPiece mover = getPieceAt(fromR, fromC);
         if (mover == null) {

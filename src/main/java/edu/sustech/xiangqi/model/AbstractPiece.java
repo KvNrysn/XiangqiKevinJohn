@@ -1,18 +1,20 @@
 package edu.sustech.xiangqi.model;
 
-public abstract class AbstractPiece {
-    private final String name;    // piece name, "General", "Soldier",etc
-    private final boolean isRed;  // true = red side, false = black side
+public abstract class AbstractPiece { //fields
+    private final String name;
+    private final boolean isRed;
     private int row;
     private int col;
 
-    public AbstractPiece(String name, int row, int col, boolean isRed) {  //purpose is to initialize the object's internal data
+    public AbstractPiece(String name, int row, int col, boolean isRed) {  //to initialize the object's internal data
         this.name = name;
         this.row = row;
         this.col = col;
         this.isRed = isRed;
-    }
-    public String getName() {
+    }// abstract bcs udk wht to do w it, only that its qualities is inherited by a subclass
+    // it is a constructor method, purpose is to initialize a classes data
+
+    public String getName() {   // getters: get current value and setters: setters update value
         return name;
     }
     public int getRow() {
@@ -34,10 +36,14 @@ public abstract class AbstractPiece {
     public void moveTo(int newRow, int newCol) {
         this.row = newRow;
         this.col = newCol;
-    }   //moving current piece to a new position, rule checking is done before calling this method (in ChessBoardModel)
+    }   //moving current piece to a new position, storing in data
 
-    public abstract boolean canMoveTo(int targetRow, int targetCol, ChessBoardModel model);
-    // Check whether current piece can move to new position, this only checks the movement pattern of that piece, not full game rules
+    public abstract boolean canMoveTo(      //Abstract because every piece moves differently
+            int targetRow,
+            int targetCol,
+            ChessBoardModel model
+    );      //polymorphism:  later in chessboardmodel "piece.canMoveTo(r, c, this);" piece can be any piece
+
     @Override
     public String toString() {
         return (isRed ? "Red " : "Black ") + name + " at (" + row + ", " + col + ")";
