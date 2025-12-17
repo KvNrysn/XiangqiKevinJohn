@@ -7,8 +7,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 public class MainMenuPanel extends JPanel {
-
-    private static final int CARD_WIDTH = 380;
+    private static final int CARD_WIDTH = 380;//layout constants
     private static final int CARD_HEIGHT = 460;
 
     private static final int BTN_W_PRIMARY = 270;
@@ -20,19 +19,12 @@ public class MainMenuPanel extends JPanel {
     private static final int CARD_RADIUS = 18;
     private static final Color GOLD = new Color(210, 175, 80);
 
-    public MainMenuPanel(
-            boolean isGuest,
-            boolean hasSavedGame,
-            ActionListener onStart,
-            ActionListener onContinue,
-            ActionListener onSettings,
-            ActionListener onExit
-    ) {
+    public MainMenuPanel(boolean isGuest, boolean hasSavedGame, ActionListener onStart, ActionListener onContinue, ActionListener onSettings, ActionListener onExit) {
         setLayout(new GridBagLayout());
         setOpaque(true);
-        setBackground(Color.BLACK);
+        setBackground(Color.BLACK);//black bg
 
-        JPanel card = new CardPanel();
+        JPanel card = new CardPanel();//main paneloverlay container (centered panel)
         card.setPreferredSize(new Dimension(CARD_WIDTH, CARD_HEIGHT));
         card.setOpaque(false);
         card.setLayout(new GridBagLayout());
@@ -42,8 +34,7 @@ public class MainMenuPanel extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.NONE;
 
-        // ===== Title =====
-        gbc.gridy = 0;
+        gbc.gridy = 0;//title
         gbc.insets = new Insets(28, 0, 36, 0);
 
         JLabel title = new JLabel("MAIN MENU", SwingConstants.CENTER);
@@ -51,64 +42,54 @@ public class MainMenuPanel extends JPanel {
         title.setForeground(new Color(220, 190, 110));
         card.add(title, gbc);
 
-        // ===== Start Game =====
-        gbc.gridy++;
+        gbc.gridy++;//start game
         gbc.insets = new Insets(0, 0, 26, 0);
 
         JButton startBtn = new ShadowButton("START GAME", true);
         startBtn.setPreferredSize(new Dimension(BTN_W_PRIMARY, BTN_H_PRIMARY));
         card.add(startBtn, gbc);
 
-        // ===== Continue =====
-        gbc.gridy++;
+        gbc.gridy++;//continue
         gbc.insets = new Insets(0, 0, 18, 0);
 
         JButton continueBtn = new ShadowButton("CONTINUE", false);
         continueBtn.setPreferredSize(new Dimension(BTN_W_SECONDARY, BTN_H_SECONDARY));
-        continueBtn.setEnabled(!isGuest && hasSavedGame); // LOGIC ALREADY CORRECT
+        continueBtn.setEnabled(!isGuest && hasSavedGame);  // Only enable if applicable
         card.add(continueBtn, gbc);
 
-        // ===== Settings =====
-        gbc.gridy++;
+        gbc.gridy++;//settings
         gbc.insets = new Insets(0, 0, 18, 0);
 
         JButton settingsBtn = new ShadowButton("SETTINGS", false);
         settingsBtn.setPreferredSize(new Dimension(BTN_W_SECONDARY, BTN_H_SECONDARY));
         card.add(settingsBtn, gbc);
 
-        // ===== Exit =====
-        gbc.gridy++;
+        gbc.gridy++;//exit
         gbc.insets = new Insets(0, 0, 0, 0);
 
         JButton exitBtn = new ShadowButton("EXIT", false);
         exitBtn.setPreferredSize(new Dimension(BTN_W_SECONDARY, BTN_H_SECONDARY));
         card.add(exitBtn, gbc);
 
-        // ===== Actions =====
-        startBtn.addActionListener(e -> {
+        startBtn.addActionListener(e -> {//sfx and button logic
             AudioManager.playSFX("click");
             onStart.actionPerformed(e);
         });
-
         continueBtn.addActionListener(e -> {
             AudioManager.playSFX("click");
             onContinue.actionPerformed(e);
         });
-
         settingsBtn.addActionListener(e -> {
             AudioManager.playSFX("click");
             onSettings.actionPerformed(e);
         });
-
         exitBtn.addActionListener(e -> {
             AudioManager.playSFX("click");
             onExit.actionPerformed(e);
         });
-
         add(card);
     }
 
-    // ===== Background =====
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -116,17 +97,13 @@ public class MainMenuPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        GradientPaint gp = new GradientPaint(
-                0, 0, Color.BLACK,
-                getWidth(), getHeight(), new Color(18, 16, 14)
-        );
+        GradientPaint gp = new GradientPaint(0, 0, Color.BLACK, getWidth(), getHeight(), new Color(18, 16, 14));
 
         g2.setPaint(gp);
         g2.fillRect(0, 0, getWidth(), getHeight());
         g2.dispose();
     }
 
-    // ===================== Card =====================
     private static class CardPanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
@@ -136,25 +113,15 @@ public class MainMenuPanel extends JPanel {
             int w = getWidth();
             int h = getHeight();
 
-            // Shadow
-            for (int i = 0; i < 18; i++) {
+            for (int i = 0; i < 18; i++) {//outer glow (soft dark blur)
                 g2.setColor(new Color(0, 0, 0, Math.max(0, 26 - i)));
-                g2.fillRoundRect(
-                        14 - i,
-                        14 - i,
-                        w - 28 + i * 2,
-                        h - 28 + i * 2,
-                        CARD_RADIUS + i,
-                        CARD_RADIUS + i
-                );
+                g2.fillRoundRect(14 - i, 14 - i, w - 28 + i * 2, h - 28 + i * 2, CARD_RADIUS + i, CARD_RADIUS + i);
             }
 
-            // Card body
-            g2.setColor(new Color(18, 18, 18));
+            g2.setColor(new Color(18, 18, 18));//bg fill
             g2.fillRoundRect(14, 14, w - 28, h - 28, CARD_RADIUS, CARD_RADIUS);
 
-            // Gold border
-            g2.setStroke(new BasicStroke(1.4f));
+            g2.setStroke(new BasicStroke(1.4f));//gold border
             g2.setColor(GOLD);
             g2.drawRoundRect(14, 14, w - 28, h - 28, CARD_RADIUS, CARD_RADIUS);
 
@@ -163,8 +130,7 @@ public class MainMenuPanel extends JPanel {
         }
     }
 
-    // ===================== Button =====================
-    private static class ShadowButton extends JButton {
+    private static class ShadowButton extends JButton {//btn shadow
         private final boolean primary;
         private final int radius;
 
@@ -191,27 +157,16 @@ public class MainMenuPanel extends JPanel {
             int h = getHeight();
             boolean enabled = isEnabled();
 
-            // Shadow
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 10; i++) {//drop shadow
                 g2.setColor(new Color(0, 0, 0, Math.max(0, 18 - i * 2)));
                 g2.fillRoundRect(3, 4 + i / 2, w - 6, h - 6, radius, radius);
             }
 
-            // Fill (ONLY CHANGE IS HERE)
-            Color fillColor;
-            if (primary) {
-                fillColor = enabled
-                        ? new Color(210, 175, 80)
-                        : new Color(210, 175, 80, 140);
-            } else {
-                fillColor = enabled
-                        ? new Color(95, 95, 95)
-                        : new Color(95, 95, 95, 120);
-            }
+            Color fillColor = primary ? (enabled ? new Color(210, 175, 80) : new Color(210, 175, 80, 140)) : (enabled ? new Color(95, 95, 95) : new Color(95, 95, 95, 120));
+
             g2.setColor(fillColor);
             g2.fillRoundRect(3, 3, w - 6, h - 6, radius, radius);
 
-            // Text (fade when disabled)
             Color fg = getForeground();
             if (!enabled) {
                 fg = new Color(fg.getRed(), fg.getGreen(), fg.getBlue(), 150);

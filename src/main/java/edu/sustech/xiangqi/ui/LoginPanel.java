@@ -7,13 +7,11 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 public class LoginPanel extends JPanel {
-
-    private JTextField usernameInput;
+    private JTextField usernameInput;//core form components
     private JPasswordField passwordInput;
     private JLabel messageLabel;
 
-    // ===== Card + content sizing =====
-    private static final int CARD_W = 440;
+    private static final int CARD_W = 440;//layout constants
     private static final int CARD_H = 520;
     private static final int CONTENT_W = 280;
     private static final int FIELD_H = 42;
@@ -23,14 +21,13 @@ public class LoginPanel extends JPanel {
         setOpaque(true);
         setBackground(Color.BLACK);
 
-        JPanel content = new JPanel();
+        JPanel content = new JPanel();//main content
         content.setOpaque(false);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setPreferredSize(new Dimension(CONTENT_W, 360));
 
-        // ===== Title =====
-        JLabel title = new JLabel("象棋", SwingConstants.CENTER);
-        title.setFont(new Font("Noto Serif SC", Font.PLAIN, 42));
+        JLabel title = new JLabel("象棋", SwingConstants.CENTER);//title
+        title.setFont(new Font("Noto Serif SC", Font.PLAIN, 42)); // Fancy Chinese font
         title.setForeground(new Color(212, 175, 55));
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -39,7 +36,7 @@ public class LoginPanel extends JPanel {
         subtitle.setForeground(new Color(200, 200, 200));
         subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        messageLabel = new JLabel(" ", SwingConstants.CENTER);
+        messageLabel = new JLabel(" ", SwingConstants.CENTER);//status messages
         messageLabel.setFont(new Font("Serif", Font.PLAIN, 14));
         messageLabel.setForeground(new Color(220, 220, 220));
         messageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -51,8 +48,7 @@ public class LoginPanel extends JPanel {
         content.add(messageLabel);
         content.add(Box.createVerticalStrut(24));
 
-        // ===== Fields =====
-        usernameInput = new RoundedTextField("Username");
+        usernameInput = new RoundedTextField("Username");//input fields
         passwordInput = new RoundedPasswordField("Password");
 
         content.add(usernameInput);
@@ -60,81 +56,52 @@ public class LoginPanel extends JPanel {
         content.add(passwordInput);
         content.add(Box.createVerticalStrut(26));
 
-        // ===== Primary button (FIXED LABEL) =====
-        JButton loginButton = new RoundedButton(
-                "LOGIN",
-                new Color(212, 175, 55),
-                Color.BLACK,
-                CONTENT_W,
-                44
-        );
+        JButton loginButton = new RoundedButton("LOGIN", new Color(212, 175, 55), Color.BLACK, CONTENT_W, 44);
         loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         content.add(loginButton);
 
         content.add(Box.createVerticalStrut(22));
-
-        // ===== Bottom buttons =====
-        JPanel bottom = new JPanel();
+        JPanel bottom = new JPanel();//register + guest button
         bottom.setOpaque(false);
         bottom.setLayout(new BoxLayout(bottom, BoxLayout.X_AXIS));
 
-        JButton registerButton = new RoundedButton(
-                "Register",
-                new Color(90, 90, 90),
-                Color.WHITE,
-                130,
-                36
-        );
-        JButton guestButton = new RoundedButton(
-                "Guest",
-                new Color(90, 90, 90),
-                Color.WHITE,
-                130,
-                36
-        );
+        JButton registerButton = new RoundedButton("Register", new Color(90, 90, 90), Color.WHITE, 130, 36);
+        JButton guestButton = new RoundedButton("Guest", new Color(90, 90, 90), Color.WHITE, 130, 36);
 
         bottom.add(registerButton);
         bottom.add(Box.createHorizontalStrut(18));
         bottom.add(guestButton);
-
         content.add(bottom);
 
-        add(content);
+        add(content);//adds everything to the panel
 
-        // ===== Actions =====
-        loginButton.addActionListener(e -> {
+        loginButton.addActionListener(e -> {//sfx & btn logic
             AudioManager.playSFX("click");
             onLogin.actionPerformed(e);
         });
-
         registerButton.addActionListener(e -> {
             AudioManager.playSFX("click");
             onRegister.actionPerformed(e);
         });
-
         guestButton.addActionListener(e -> {
             AudioManager.playSFX("click");
             onGuest.actionPerformed(e);
         });
     }
 
-    // ===================== API =====================
-    public String getUsername() {
+    public String getUsername() {//analyze inputs
         return usernameInput.getText().trim();
     }
-
     public String getPassword() {
         return new String(passwordInput.getPassword());
     }
-
     public void setMessage(String msg) {
         messageLabel.setText(msg);
         repaint();
     }
 
-    // ===================== Background + Card =====================
     @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintComponent(Graphics g) {//paneloverlay and background
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -142,35 +109,30 @@ public class LoginPanel extends JPanel {
         int w = getWidth();
         int h = getHeight();
 
-        // background
         g2.setPaint(new GradientPaint(0, 0, new Color(10,10,10), 0, h, new Color(5,5,5)));
         g2.fillRect(0, 0, w, h);
 
         int x = (w - CARD_W) / 2;
         int y = (h - CARD_H) / 2;
 
-        // shadow
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 20; i++) {//shadow
             g2.setComposite(AlphaComposite.SrcOver.derive(0.04f));
             g2.setColor(Color.BLACK);
             g2.fillRoundRect(x - i, y - i, CARD_W + i*2, CARD_H + i*2, 28, 28);
         }
         g2.setComposite(AlphaComposite.SrcOver);
 
-        // card
-        g2.setColor(new Color(18,18,18,235));
+        g2.setColor(new Color(18,18,18,235));//paneloverlay bg
         g2.fillRoundRect(x, y, CARD_W, CARD_H, 28, 28);
 
-        // border
-        g2.setStroke(new BasicStroke(1.4f));
+        g2.setStroke(new BasicStroke(1.4f));//border
         g2.setColor(new Color(212,175,55,190));
         g2.drawRoundRect(x, y, CARD_W, CARD_H, 28, 28);
 
         g2.dispose();
     }
 
-    // ===================== Rounded Text Field =====================
-    private static class RoundedTextField extends JTextField {
+    private static class RoundedTextField extends JTextField {//maketyping field rounded corners
         private final String placeholder;
 
         RoundedTextField(String placeholder) {
@@ -205,7 +167,6 @@ public class LoginPanel extends JPanel {
         }
     }
 
-    // ===================== Rounded Password Field =====================
     private static class RoundedPasswordField extends JPasswordField {
         private final String placeholder;
 
@@ -241,8 +202,7 @@ public class LoginPanel extends JPanel {
         }
     }
 
-    // ===================== Rounded Button =====================
-    private static class RoundedButton extends JButton {
+    private static class RoundedButton extends JButton {//rounded btn function
         private final Color bg, fg;
         private final int w, h;
 
@@ -281,7 +241,6 @@ public class LoginPanel extends JPanel {
                     (w - fm.stringWidth(getText())) / 2,
                     (h + fm.getAscent()) / 2 - 2
             );
-
             g2.dispose();
         }
     }

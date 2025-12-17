@@ -6,23 +6,21 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
-public class GameOverOverlayPanel extends JPanel {
 
-    // ===== UI Colors =====
+public class GameOverOverlayPanel extends JPanel {
     private static final Color GOLD = new Color(212, 175, 55);
     private static final Color PANEL_BG = new Color(18, 18, 18);
     private static final Color SUBTEXT = new Color(170, 170, 170);
 
     public GameOverOverlayPanel(
-            String message,
-            ActionListener onRestart,
-            ActionListener onQuit
+            String message,                  //combined game result + reason
+            ActionListener onRestart,       //restart game
+            ActionListener onQuit           //quit to main menu
     ) {
         setLayout(null);
         setOpaque(false);
 
-        // ===== Full-screen tint =====
-        JPanel tint = new JPanel() {
+        JPanel tint = new JPanel() {//dim background
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -35,8 +33,7 @@ public class GameOverOverlayPanel extends JPanel {
         tint.setLayout(null);
         add(tint);
 
-        // ===== Main card =====
-        JPanel card = new JPanel() {
+        JPanel card = new JPanel() {//paneloverlay
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -46,15 +43,12 @@ public class GameOverOverlayPanel extends JPanel {
                 int h = getHeight();
                 int r = 28;
 
-                // Shadow (large + soft)
                 g2.setColor(new Color(0, 0, 0, 160));
                 g2.fillRoundRect(-6, 8, w + 12, h + 12, r, r);
 
-                // Panel body
                 g2.setColor(PANEL_BG);
                 g2.fillRoundRect(0, 0, w, h, r, r);
 
-                // Gold border
                 g2.setStroke(new BasicStroke(2f));
                 g2.setColor(GOLD);
                 g2.drawRoundRect(0, 0, w - 1, h - 1, r, r);
@@ -65,19 +59,16 @@ public class GameOverOverlayPanel extends JPanel {
         card.setOpaque(false);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
-        // ===== Title =====
         JLabel title = new JLabel(extractTitle(message), SwingConstants.CENTER);
         title.setFont(new Font("Serif", Font.BOLD, 30));
         title.setForeground(GOLD);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // ===== Subtitle =====
         JLabel subtitle = new JLabel(extractReason(message), SwingConstants.CENTER);
         subtitle.setFont(new Font("Serif", Font.PLAIN, 15));
         subtitle.setForeground(SUBTEXT);
         subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // ===== Buttons row (CENTERED AS A GROUP) =====
         JPanel buttonRow = new JPanel();
         buttonRow.setOpaque(false);
         buttonRow.setLayout(new BoxLayout(buttonRow, BoxLayout.X_AXIS));
@@ -89,7 +80,6 @@ public class GameOverOverlayPanel extends JPanel {
         buttonRow.add(Box.createHorizontalStrut(18));
         buttonRow.add(quitBtn);
 
-        // ===== Spacing =====
         card.add(Box.createVerticalStrut(28));
         card.add(title);
         card.add(Box.createVerticalStrut(8));
@@ -100,12 +90,10 @@ public class GameOverOverlayPanel extends JPanel {
 
         tint.add(card);
 
-        // ===== Actions =====
-        restartBtn.addActionListener(e -> {
+        restartBtn.addActionListener(e -> {//sfx and logic
             AudioManager.playSFX("click");
             onRestart.actionPerformed(e);
         });
-
         quitBtn.addActionListener(e -> {
             AudioManager.playSFX("click");
             onQuit.actionPerformed(e);
@@ -123,15 +111,8 @@ public class GameOverOverlayPanel extends JPanel {
         int cardW = 520;
         int cardH = 220;
 
-        card.setBounds(
-                (getWidth() - cardW) / 2,
-                (getHeight() - cardH) / 2,
-                cardW,
-                cardH
-        );
+        card.setBounds((getWidth() - cardW) / 2, (getHeight() - cardH) / 2, cardW, cardH);
     }
-
-    // ===== Helpers =====
 
     private JButton createPrimaryButton(String text) {
         JButton btn = new JButton(text);
@@ -145,7 +126,7 @@ public class GameOverOverlayPanel extends JPanel {
         return btn;
     }
 
-    private void styleButton(JButton btn, Color bg, Color fg) {
+    private void styleButton(JButton btn, Color bg, Color fg) {//styling button
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setContentAreaFilled(false);
@@ -170,11 +151,7 @@ public class GameOverOverlayPanel extends JPanel {
 
                 FontMetrics fm = g2.getFontMetrics();
                 g2.setColor(fg);
-                g2.drawString(
-                        btn.getText(),
-                        (w - fm.stringWidth(btn.getText())) / 2,
-                        (h + fm.getAscent()) / 2 - 2
-                );
+                g2.drawString(btn.getText(), (w - fm.stringWidth(btn.getText())) / 2, (h + fm.getAscent()) / 2 - 2);
 
                 g2.dispose();
             }

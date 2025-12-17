@@ -6,20 +6,14 @@ import java.util.Map;
 
 public final class AudioManager {
 
-    // ================== FLAGS ==================
     private static boolean musicEnabled = true;
     private static boolean sfxEnabled = true;
 
-    // ================== BGM ==================
     private static Clip bgmClip;
     private static FloatControl bgmVolume;
-
-    // Persisted volume state (0.0f – 1.0f)
     private static float musicVolume = 0.6f;
-    private static float sfxVolume = 0.6f; // kept for future use
 
-    // ================== SFX REGISTRY ==================
-    private static final Map<String, String> SFX_MAP = Map.of(
+    private static final Map<String, String> SFX_MAP = Map.of(//sfx files
             "click",     "/audio/click.wav",
             "move",      "/audio/move.wav",
             "capture",   "/audio/capture.wav",
@@ -28,18 +22,15 @@ public final class AudioManager {
             "gameover",  "/audio/gameover.wav"
     );
 
-    // ================== INIT ==================
-    public static void init() {
+    public static void init() {//start bgm
         initBGM("/audio/tenxi.wav");
-        setMusicVolume(musicVolume); // apply default volume
+        setMusicVolume(musicVolume);
     }
 
-    private static void initBGM(String path) {
+    private static void initBGM(String path) {//start bgm
         try {
             URL url = AudioManager.class.getResource(path);
-            if (url == null) {
-                throw new RuntimeException("BGM not found: " + path);
-            }
+            if (url == null) throw new RuntimeException("BGM not found: " + path);
 
             AudioInputStream ais = AudioSystem.getAudioInputStream(url);
             bgmClip = AudioSystem.getClip();
@@ -56,15 +47,12 @@ public final class AudioManager {
         }
     }
 
-    // ================== MUSIC CONTROL ==================
-    public static void setMusicEnabled(boolean enabled) {
+    public static void setMusicEnabled(boolean enabled) {//music control for checkbox
         musicEnabled = enabled;
         if (bgmClip == null) return;
 
-        if (enabled) {
-            if (!bgmClip.isRunning()) {
-                bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
-            }
+        if (enabled && !bgmClip.isRunning()) {
+            bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
         } else {
             bgmClip.stop();
         }
@@ -75,9 +63,7 @@ public final class AudioManager {
     }
 
     public static void setMusicVolume(float volume) {
-        // clamp
         musicVolume = Math.max(0f, Math.min(1f, volume));
-
         if (bgmVolume == null) return;
 
         float min = bgmVolume.getMinimum();
@@ -89,8 +75,7 @@ public final class AudioManager {
         return musicVolume;
     }
 
-    // ================== SFX ==================
-    public static void playSFX(String key) {
+    public static void playSFX(String key) {//play sfx, string key is the sfx file title
         if (!sfxEnabled) return;
 
         String path = SFX_MAP.get(key);
@@ -110,14 +95,12 @@ public final class AudioManager {
             Clip clip = AudioSystem.getClip();
             clip.open(ais);
 
-            clip.addLineListener(e -> {
+            clip.addLineListener(e -> {//close clip after playback
                 if (e.getType() == LineEvent.Type.STOP) {
                     clip.close();
                 }
             });
-
             clip.start();
-
         } catch (Exception e) {
             System.err.println("Failed to play SFX: " + key);
             e.printStackTrace();
@@ -132,5 +115,5 @@ public final class AudioManager {
         return sfxEnabled;
     }
 
-    private AudioManager() {}
+    private AudioManager() {}//preventing instantiation
 }

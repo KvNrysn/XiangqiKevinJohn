@@ -4,9 +4,6 @@ import edu.sustech.xiangqi.audio.AudioManager;
 import edu.sustech.xiangqi.model.AbstractPiece;
 import edu.sustech.xiangqi.model.ChessBoardModel;
 import edu.sustech.xiangqi.model.SoldierPiece;
-import edu.sustech.xiangqi.model.ChessBoardModel.Move;
-
-
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,42 +15,32 @@ import java.awt.Point;
 import java.io.File;
 
 public class ChessBoardPanel extends JPanel {
-
     private JPanel topBar;
     private JPanel hudPanel;
-
     private JLayeredPane layeredPane;
     private JPanel basePanel;
 
-    // ===== Move History =====
     private MoveHistoryPanel moveHistoryPanel;
     private boolean historyVisible = false;
     private Timer historySlideTimer;
     private int historyOffsetX = 0;
     private static final int HISTORY_WIDTH = 320;
 
-
-
-    // ===== UI Colors =====
     private static final Color GOLD = new Color(212, 175, 55);
 
-
-    // ===== Turn lock / animation =====
     private boolean turnLocked = false;
     private Timer turnLockTimer;
     private Timer turnAnimTimer;
 
-    // ===== Move Animation =====
     private static final int MOVE_ANIM_DURATION_MS = 180;
-    private static final int MOVE_ANIM_TICK_MS = 16; // ~60fps
+    private static final int MOVE_ANIM_TICK_MS = 16;
     private boolean moveAnimating = false;
     private Timer moveAnimTimer;
     private AbstractPiece animPiece = null;
     private int animFromRow, animFromCol, animToRow, animToCol;
     private float animT = 0f;
-    private List<AbstractPiece> animBeforeMoveSnapshot = null; // for capture detection after animation
+    private List<AbstractPiece> animBeforeMoveSnapshot = null;
 
-    // ===== Captured fade-in animation =====
     private static final int CAPTURE_FADE_MS = 260;
     private static final int CAPTURE_FADE_TICK_MS = 16;
     private Timer captureFadeTimer;
@@ -67,7 +54,6 @@ public class ChessBoardPanel extends JPanel {
         }
     }
 
-    // ===== Feedback UI =====
     private JLabel feedbackLabel;
     private Timer feedbackTimer;
 
@@ -75,11 +61,9 @@ public class ChessBoardPanel extends JPanel {
     private final Runnable onRestartGame;
     private final Runnable onQuitToMenu;
 
-    // ===== Captured Pieces (UI only) =====
     private final List<CapturedEntry> capturedRed = new ArrayList<>();
     private final List<CapturedEntry> capturedBlack = new ArrayList<>();
 
-    // ===== State =====
     private boolean isGameOver = false;
     private boolean isPaused = false;
 
@@ -91,23 +75,18 @@ public class ChessBoardPanel extends JPanel {
 
     private Timer illegalMoveTimer;
 
-    // ===== Overlays =====
     private PauseOverlayPanel pauseOverlay;
     private GameOverOverlayPanel gameOverOverlay;
 
-    // ===== Top Bar =====
     private JLabel turnLabel;
     private JButton pauseButton;
 
-    // ===== Geometry =====
     private static final int CELL_SIZE = 64;
     private static final int MARGIN = 40;
     private static final int PIECE_RADIUS = 25;
 
-    // Space reserved for captured pieces on BOTH sides
     private static final int SIDE_PADDING = 140;
 
-    // Board origin (top-left grid corner)
     private int boardLeftX() {
         return SIDE_PADDING + MARGIN;
     }
@@ -164,8 +143,6 @@ public class ChessBoardPanel extends JPanel {
     }
 
     private void buildTopBar() {
-
-        // ===== Turn label =====
         turnLabel = new JLabel();
         turnLabel.setFont(new Font("Serif", Font.BOLD, 16));
         turnLabel.setForeground(GOLD);
@@ -175,18 +152,15 @@ public class ChessBoardPanel extends JPanel {
         feedbackLabel.setFont(new Font("Serif", Font.PLAIN, 14));
         feedbackLabel.setForeground(new Color(180, 0, 0));
 
-        // ===== HISTORY button (left) =====
         JButton historyButton = createGoldButton("HISTORY");
         historyButton.addActionListener(e -> toggleHistoryPanel());
 
-        // ===== PAUSE button (right) =====
         pauseButton = createGoldButton("PAUSE");
         pauseButton.addActionListener(e -> {
             AudioManager.playSFX("click");
             pauseGame();
         });
 
-        // ===== Left column =====
         JPanel leftColumn = new JPanel();
         leftColumn.setOpaque(false);
         leftColumn.setLayout(new BoxLayout(leftColumn, BoxLayout.Y_AXIS));
@@ -195,12 +169,10 @@ public class ChessBoardPanel extends JPanel {
         leftColumn.add(turnLabel);
         leftColumn.add(feedbackLabel);
 
-        // ===== Right column =====
         JPanel rightColumn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         rightColumn.setOpaque(false);
         rightColumn.add(pauseButton);
 
-        // ===== HUD panel =====
         hudPanel = new JPanel(new BorderLayout());
         hudPanel.setOpaque(false);
         hudPanel.setBorder(BorderFactory.createEmptyBorder(12, 16, 0, 16));
@@ -233,11 +205,7 @@ public class ChessBoardPanel extends JPanel {
 
                 g2.setColor(Color.BLACK);
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(
-                        getText(),
-                        (w - fm.stringWidth(getText())) / 2,
-                        (h + fm.getAscent()) / 2 - 2
-                );
+                g2.drawString(getText(), (w - fm.stringWidth(getText())) / 2, (h + fm.getAscent()) / 2 - 2);
                 g2.dispose();
             }
         };
@@ -250,10 +218,6 @@ public class ChessBoardPanel extends JPanel {
 
         return btn;
     }
-
-
-
-
 
 
     private void showIllegalFeedback(String message) {
@@ -306,8 +270,6 @@ public class ChessBoardPanel extends JPanel {
         int end = historyVisible ? HISTORY_WIDTH : 0;
 
         historySlideTimer = new Timer(16, e -> {
-
-            // move toward "end"
             if (historyOffsetX < end) {
                 historyOffsetX = Math.min(end, historyOffsetX + 24);
             } else if (historyOffsetX > end) {
@@ -324,13 +286,8 @@ public class ChessBoardPanel extends JPanel {
                 if (!historyVisible) moveHistoryPanel.setVisible(false);
             }
         });
-
-
         historySlideTimer.start();
     }
-
-
-
 
     private void hookMouse() {
         addMouseListener(new MouseAdapter() {
@@ -364,9 +321,6 @@ public class ChessBoardPanel extends JPanel {
         }
 
     }
-
-
-    // ===================== Pause / Resume =====================
 
     public void pauseGame() {
         if (isPaused || isGameOver || moveAnimating) return;
@@ -494,8 +448,6 @@ public class ChessBoardPanel extends JPanel {
         showGameOverOverlay(msg);
     }
 
-    // ===================== Input / Move =====================
-
     private void handleMouseClick(int mouseX, int mouseY) {
         for (Point p : validMovePoints) {
             int cx = boardLeftX() + p.x * CELL_SIZE;
@@ -569,7 +521,6 @@ public class ChessBoardPanel extends JPanel {
             repaint();
             return;
         }
-
         startMoveAnimation(movingPiece, fromRow, fromCol, row, col, beforeMove);
     }
 
@@ -594,7 +545,6 @@ public class ChessBoardPanel extends JPanel {
         startMoveAnimation(movingPiece, fromRow, fromCol, row, col, beforeMove);
     }
 
-    // ===================== MOVE ANIMATION =====================
 
     private void startMoveAnimation(AbstractPiece piece, int fr, int fc, int tr, int tc, List<AbstractPiece> beforeMove) {
         if (moveAnimTimer != null && moveAnimTimer.isRunning()) {
@@ -632,30 +582,23 @@ public class ChessBoardPanel extends JPanel {
             detectCapturedPieces(animBeforeMoveSnapshot);
             animBeforeMoveSnapshot = null;
         }
-
         if (moveHistoryPanel != null) {
             moveHistoryPanel.updateMoves(model.getMoveHistory());
         }
-
 
         handlePostMoveUI();
         lockTurnBriefly();
 
         animPiece = null;
-
-
         repaint();
-
     }
 
 
     private void detectCapturedPieces(List<AbstractPiece> beforeMove) {
         boolean addedAny = false;
-
         for (AbstractPiece p : beforeMove) {
             if (!model.getPieces().contains(p)) {
 
-                // add as fade-in entry
                 if (p.isRed()) capturedRed.add(new CapturedEntry(p, 0f));
                 else capturedBlack.add(new CapturedEntry(p, 0f));
                 addedAny = true;
@@ -698,7 +641,6 @@ public class ChessBoardPanel extends JPanel {
                 captureFadeTimer.stop();
             }
         });
-
         captureFadeTimer.start();
     }
 
@@ -751,7 +693,6 @@ public class ChessBoardPanel extends JPanel {
         int missingRed = 16 - redCount;
         int missingBlack = 16 - blackCount;
 
-        // These are placeholders, treat as already visible (alpha=1)
         for (int i = 0; i < missingRed; i++) {
             capturedRed.add(new CapturedEntry(new SoldierPiece("兵", -1, -1, true), 1f));
         }
@@ -788,7 +729,6 @@ public class ChessBoardPanel extends JPanel {
                 message = "Draw";
             }
         }
-
         showGameOverOverlay(message);
     }
 
@@ -808,8 +748,6 @@ public class ChessBoardPanel extends JPanel {
         }
     }
 
-    // ===================== Illegal Move Flash =====================
-
     private void triggerIllegalMoveFeedback() {
         if (illegalMoveTimer != null && illegalMoveTimer.isRunning()) return;
 
@@ -821,8 +759,6 @@ public class ChessBoardPanel extends JPanel {
         illegalMoveTimer.start();
         repaint();
     }
-
-    // ===================== Paint =====================
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -837,7 +773,6 @@ public class ChessBoardPanel extends JPanel {
         );
         g2d.setPaint(bg);
         g2d.fillRect(0, 0, getWidth(), getHeight());
-
 
         drawBoard(g2d);
         drawLastMoveHighlightFromBackend(g2d);
@@ -887,11 +822,9 @@ public class ChessBoardPanel extends JPanel {
         g.drawString(chuHe, left + CELL_SIZE * 2 - fm.stringWidth(chuHe) / 2, riverY + 8);
         g.drawString(hanJie, left + CELL_SIZE * 6 - fm.stringWidth(hanJie) / 2, riverY + 8);
 
-        // ===== Palace diagonals (gold) =====
         g.setStroke(new BasicStroke(1));
         g.setColor(GOLD);
 
-// Red palace (bottom)
         int rpTop = boardTopY() + 7 * CELL_SIZE;
         int rpLeft = boardLeftX() + 3 * CELL_SIZE;
         int rpRight = boardLeftX() + 5 * CELL_SIZE;
@@ -900,7 +833,6 @@ public class ChessBoardPanel extends JPanel {
         g.drawLine(rpLeft, rpTop, rpRight, rpBottom);
         g.drawLine(rpRight, rpTop, rpLeft, rpBottom);
 
-// Black palace (top)
         int bpTop = boardTopY();
         int bpLeft = boardLeftX() + 3 * CELL_SIZE;
         int bpRight = boardLeftX() + 5 * CELL_SIZE;
@@ -912,7 +844,6 @@ public class ChessBoardPanel extends JPanel {
 
     private void drawPieces(Graphics2D g) {
         for (AbstractPiece piece : model.getPieces()) {
-
             int cx;
             int cy;
 
@@ -942,9 +873,7 @@ public class ChessBoardPanel extends JPanel {
             g.setColor(piece.isRed() ? new Color(200, 0, 0) : Color.BLACK);
 
             FontMetrics fm = g.getFontMetrics();
-            g.drawString(piece.getName(),
-                    cx - fm.stringWidth(piece.getName()) / 2,
-                    cy + fm.getAscent() / 2 - 2);
+            g.drawString(piece.getName(), cx - fm.stringWidth(piece.getName()) / 2, cy + fm.getAscent() / 2 - 2);
         }
     }
 
@@ -1000,7 +929,6 @@ public class ChessBoardPanel extends JPanel {
     }
 
     private void drawMiniPiece(Graphics2D g, CapturedEntry entry, int cx, int cy, int radius) {
-        // apply fade alpha (only for this mini piece)
         Composite old = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, Math.min(1f, entry.alpha))));
 
@@ -1017,11 +945,7 @@ public class ChessBoardPanel extends JPanel {
         g.setColor(piece.isRed() ? new Color(200, 0, 0) : Color.BLACK);
 
         FontMetrics fm = g.getFontMetrics();
-        g.drawString(piece.getName(),
-                cx - fm.stringWidth(piece.getName()) / 2,
-                cy + fm.getAscent() / 2 - 2);
-
-        g.setComposite(old);
+        g.drawString(piece.getName(), cx - fm.stringWidth(piece.getName()) / 2, cy + fm.getAscent() / 2 - 2);g.setComposite(old);
     }
 
     private void drawLastMoveHighlightFromBackend(Graphics2D g) {
@@ -1040,12 +964,7 @@ public class ChessBoardPanel extends JPanel {
         int x = boardLeftX() + p.x * CELL_SIZE;
         int y = boardTopY() + p.y * CELL_SIZE;
 
-        g.drawRect(
-                x - CELL_SIZE / 2 + 4,
-                y - CELL_SIZE / 2 + 4,
-                CELL_SIZE - 8,
-                CELL_SIZE - 8
-        );
+        g.drawRect(x - CELL_SIZE / 2 + 4, y - CELL_SIZE / 2 + 4, CELL_SIZE - 8, CELL_SIZE - 8);
     }
 
     private AbstractPiece getCheckedGeneral() {
@@ -1070,12 +989,7 @@ public class ChessBoardPanel extends JPanel {
         g.setColor(new Color(220, 0, 0, 180));
         g.setStroke(new BasicStroke(4));
 
-        g.drawOval(
-                cx - PIECE_RADIUS - 6,
-                cy - PIECE_RADIUS - 6,
-                (PIECE_RADIUS + 6) * 2,
-                (PIECE_RADIUS + 6) * 2
-        );
+        g.drawOval(cx - PIECE_RADIUS - 6, cy - PIECE_RADIUS - 6, (PIECE_RADIUS + 6) * 2, (PIECE_RADIUS + 6) * 2);
     }
 
 
